@@ -299,16 +299,41 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" id="ghChev"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="gh-config-body" id="ghConfigBody">
-      <div class="gh-fields">
-        <div class="gh-field"><label>Repository Owner</label><input type="text" id="ghOwner" placeholder="username or org" oninput="saveGhConfig()"></div>
-        <div class="gh-field"><label>Repository Name</label><input type="text" id="ghRepo" placeholder="watchnexus" oninput="saveGhConfig()"></div>
-        <div class="gh-field"><label>Personal Access Token</label><input type="password" id="ghToken" placeholder="ghp_••••••••••••" oninput="saveGhConfig()"></div>
+      <div class="gh-fields" style="grid-template-columns:1fr 1fr 1fr 160px;">
+        <div class="gh-field">
+          <label>Repository Owner <span style="color:var(--teal);font-size:10px;">&#9679; locked</span></label>
+          <input type="text" id="ghOwner" readonly style="opacity:0.45;cursor:not-allowed;">
+        </div>
+        <div class="gh-field">
+          <label>Repository Name <span style="color:var(--teal);font-size:10px;">&#9679; locked</span></label>
+          <input type="text" id="ghRepo" readonly style="opacity:0.45;cursor:not-allowed;">
+        </div>
+        <div class="gh-field">
+          <label>Your Personal Access Token</label>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" oninput="saveGhConfig()">
+        </div>
         <div class="gh-field"><label>&nbsp;</label><button class="btn btn-primary" onclick="testGhConnection()" style="width:100%">Test Connection</button></div>
       </div>
-      <div class="gh-note">
-        &#9432;&nbsp; Token needs <code style="color:var(--teal);background:var(--teal-dim);padding:1px 5px;border-radius:3px;">repo</code> scope.
-        <a href="https://github.com/settings/tokens/new" target="_blank">Generate token →</a>
-        &nbsp;|&nbsp; Token is stored in your browser only, never committed to the repo.
+      <div style="margin-top:16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:12px;">// How to get your token (2 minutes)</div>
+        <div style="display:grid;grid-template-columns:22px 1fr;gap:5px 10px;font-size:12px;color:var(--text2);line-height:1.6;">
+          <span style="color:var(--teal);font-family:var(--mono);font-weight:700;">1.</span>
+          <span>Go to <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--blue);text-decoration:none;">github.com/settings/tokens/new</a> &mdash; you need a free GitHub account if you don't have one already.</span>
+          <span style="color:var(--teal);font-family:var(--mono);font-weight:700;">2.</span>
+          <span>In the <strong style="color:var(--text)">Note</strong> field type something like <code style="color:var(--teal);background:var(--teal-dim);padding:1px 5px;border-radius:3px;">WatchNexus QA</code> so you remember what it's for.</span>
+          <span style="color:var(--teal);font-family:var(--mono);font-weight:700;">3.</span>
+          <span>Set <strong style="color:var(--text)">Expiration</strong> to <strong style="color:var(--text)">90 days</strong> (or no expiration if you prefer a one-time setup).</span>
+          <span style="color:var(--teal);font-family:var(--mono);font-weight:700;">4.</span>
+          <span>Under <strong style="color:var(--text)">Select scopes</strong>, check <code style="color:var(--teal);background:var(--teal-dim);padding:1px 5px;border-radius:3px;">public_repo</code> &mdash; that is the only permission needed to post issues to this project.</span>
+          <span style="color:var(--teal);font-family:var(--mono);font-weight:700;">5.</span>
+          <span>Scroll down and click <strong style="color:var(--text)">Generate token</strong>. <strong style="color:var(--red);">Copy it immediately</strong> &mdash; GitHub only shows it once.</span>
+          <span style="color:var(--teal);font-family:var(--mono);font-weight:700;">6.</span>
+          <span>Paste it into the <strong style="color:var(--text)">Your Personal Access Token</strong> field above and click <strong style="color:var(--text)">Test Connection</strong>. Your token is saved in your browser only &mdash; it is never stored in or transmitted with the report file.</span>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);display:flex;align-items:flex-start;gap:6px;">
+          <span style="color:var(--amber);flex-shrink:0;">&#9888;</span>
+          <span>Keep your token private. Do not share it or paste it anywhere other than this field. If you think it has been exposed, go to <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--blue);text-decoration:none;">github.com/settings/tokens</a> and delete it immediately.</span>
+        </div>
       </div>
     </div>
   </div>
@@ -444,16 +469,16 @@ let state={tests:{},bugs:[],perf:{},reg:{},signoff:{}};
 let bugCounter=1;
 
 // ─── GITHUB ───────────────────────────────────────────────
+const GH_OWNER='z3r0fell';
+const GH_REPO='wachnexus-qa';
 function getGhCfg(){
   return{
-    owner:localStorage.getItem('wn_gh_owner')||'',
-    repo:localStorage.getItem('wn_gh_repo')||'',
+    owner:GH_OWNER,
+    repo:GH_REPO,
     token:localStorage.getItem('wn_gh_token')||''
   };
 }
 function saveGhConfig(){
-  localStorage.setItem('wn_gh_owner',document.getElementById('ghOwner').value.trim());
-  localStorage.setItem('wn_gh_repo',document.getElementById('ghRepo').value.trim());
   localStorage.setItem('wn_gh_token',document.getElementById('ghToken').value.trim());
   updateGhStatus(null);
 }
@@ -462,7 +487,7 @@ function loadGhConfig(){
   document.getElementById('ghOwner').value=c.owner;
   document.getElementById('ghRepo').value=c.repo;
   document.getElementById('ghToken').value=c.token;
-  if(c.owner&&c.repo&&c.token) updateGhStatus(true);
+  if(c.token) updateGhStatus(true);
 }
 function updateGhStatus(ok){
   const dot=document.getElementById('ghDot');
